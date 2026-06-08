@@ -510,10 +510,11 @@ button,.diff-card{touch-action:manipulation;}
 .screen{height:100svh;}
 
 @media(max-width:700px){
-  body{overflow-y:auto;}
+  /* Lock body scroll; game manages its own viewport */
+  body{overflow:hidden;}
 
   /* Start screen */
-  #startScreen{gap:18px;padding:76px 16px 28px;justify-content:flex-start;overflow-y:auto;height:100svh;}
+  #startScreen{gap:18px;padding:76px 16px 28px;justify-content:flex-start;overflow-y:auto;}
   .cat-bounce{font-size:3.4rem;}
   .title-block h1{font-size:2.6rem;}
   .title-block p{font-size:.85rem;}
@@ -533,19 +534,27 @@ button,.diff-card{touch-action:manipulation;}
   .settings-fab{top:14px;right:14px;padding:8px 14px;font-size:.82rem;}
   .lb-fab{top:14px;left:14px;padding:8px 14px;font-size:.82rem;}
 
+  /* Game screen: fixed to visual viewport so keyboard doesn't push words offscreen */
+  #gameScreen{
+    position:fixed;top:0;left:0;right:0;
+    height:var(--app-h,100svh);
+    overflow:hidden;
+  }
+
   /* Game HUD */
-  .hstat{padding:7px 3px;}
+  .hstat{padding:6px 3px;}
   .hstat-label{font-size:.38rem;letter-spacing:1px;}
-  .hstat-val{font-size:1rem;}
+  .hstat-val{font-size:.95rem;}
   .icon-btn{width:28px;height:28px;font-size:.8rem;border-radius:8px;}
   .header-btns{padding:5px 4px 5px 6px;gap:3px;}
 
   /* Word pills */
-  .word-pill{font-size:.95rem;padding:7px 14px;}
+  .word-pill{font-size:.9rem;padding:6px 13px;}
 
-  /* Input bar */
-  .input-bar{padding:10px 12px;gap:8px;}
-  #typingInput{font-size:.95rem;padding:10px 16px;}
+  /* Input bar — stays visible above keyboard */
+  .input-bar{padding:8px 12px;gap:8px;}
+  /* 16px minimum prevents iOS auto-zoom which causes layout shift */
+  #typingInput{font-size:16px;padding:10px 16px;}
   .input-hint{display:none;}
 
   /* Game over */
@@ -582,7 +591,7 @@ button,.diff-card{touch-action:manipulation;}
 @media(max-width:400px){
   .title-block h1{font-size:2.1rem;}
   .cat-bounce{font-size:2.8rem;}
-  .hstat-val{font-size:.88rem;}
+  .hstat-val{font-size:.85rem;}
   .hstat-label{font-size:.34rem;}
   .diff-card h3{font-size:1.05rem;}
   .over-card{padding:20px 14px;}
@@ -913,7 +922,21 @@ function showScreen(id){ document.querySelectorAll('.screen').forEach(s=>s.class
 function fmt(s){ return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`; }
 function clearInput(){ document.getElementById('typingInput').value=''; prevTypedLen=0; }
 function syncCanvas(){ const c=document.getElementById('fxCanvas'),a=document.getElementById('gameArea'); c.width=a.clientWidth; c.height=a.clientHeight; }
-window.addEventListener('resize',syncCanvas);
+
+/* Keep --app-h in sync with the VISUAL viewport (shrinks when keyboard opens).
+   This lets the game screen reflow correctly on mobile without scrolling. */
+function setAppHeight(){
+  const h=(window.visualViewport?window.visualViewport.height:window.innerHeight)+'px';
+  document.documentElement.style.setProperty('--app-h',h);
+}
+function onResize(){ setAppHeight(); syncCanvas(); }
+window.addEventListener('resize',onResize);
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize',onResize);
+  /* Prevent the browser from scrolling the page when the input is focused */
+  window.visualViewport.addEventListener('scroll',()=>window.scrollTo(0,0));
+}
+setAppHeight();
 
 /* ── MENU ── */
 function goMenu(){
