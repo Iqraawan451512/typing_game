@@ -1112,7 +1112,8 @@ function loop(ts){
 /* ── MISS / HIT ── */
 function missWord(w){
   activeWords=activeWords.filter(x=>x.id!==w.id);
-  if(locked&&locked.id===w.id){locked=null;clearInput();}
+  if(locked&&locked.id===w.id) locked=null;
+  clearInput();
   w.el.classList.add('anim-missed'); setTimeout(()=>w.el.remove(),380);
   lives--; combo=0; wordsMiss++; updateHeader(); sound('miss');
   screenFlash('miss'); inputRipple('miss');
